@@ -75,10 +75,10 @@ $query_builder = TRUE;
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'localhost',
-	'username' => 'root',
-	'password' => '',
-	'database' => 'cias',
+	'hostname' => 'avivamiento-mysql.cu6hco42ttxv.us-east-1.rds.amazonaws.com',
+	'username' => 'aviva2admin',
+	'password' => 'd6SSQKe7sxYXB5hCF2zZzR6kc3NXc',
+	'database' => 'aviva2parrilla',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
