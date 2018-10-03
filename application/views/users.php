@@ -2,7 +2,7 @@
     <!-- Content Header (Page header) -->
     <section class="content-header">
       <h1>
-        User Management
+        <i class="fa fa-users"></i> User Management
         <small>Add, Edit, Delete</small>
       </h1>
     </section>
@@ -10,7 +10,7 @@
         <div class="row">
             <div class="col-xs-12 text-right">
                 <div class="form-group">
-                    <a class="btn btn-primary" href="<?php echo base_url(); ?>addNew">Add New</a>
+                    <a class="btn btn-primary" href="<?php echo base_url(); ?>addNew"><i class="fa fa-plus"></i> Add New</a>
                 </div>
             </div>
         </div>
@@ -33,12 +33,12 @@
                 <div class="box-body table-responsive no-padding">
                   <table class="table table-hover">
                     <tr>
-                      <th>Id</th>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Mobile</th>
-                      <th>Role</th>
-                      <th>Actions</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Mobile</th>
+                        <th>Role</th>
+                        <th>Created On</th>
+                        <th class="text-center">Actions</th>
                     </tr>
                     <?php
                     if(!empty($userRecords))
@@ -47,15 +47,16 @@
                         {
                     ?>
                     <tr>
-                      <td><?php echo $record->userId ?></td>
-                      <td><?php echo $record->name ?></td>
-                      <td><?php echo $record->email ?></td>
-                      <td><?php echo $record->mobile ?></td>
-                      <td><?php echo $record->role ?></td>
-                      <td>
-                          <a href="<?php echo base_url().'editOld/'.$record->userId; ?>"><i class="fa fa-pencil"></i>&nbsp;&nbsp;&nbsp;</a>
-                          <a href="#" data-userid="<?php echo $record->userId; ?>" class="deleteUser"><i class="fa fa-trash"></i>&nbsp;&nbsp;&nbsp;</a>
-                      </td>
+                        <td><?php echo $record->name ?></td>
+                        <td><?php echo $record->email ?></td>
+                        <td><?php echo $record->mobile ?></td>
+                        <td><?php echo $record->role ?></td>
+                        <td><?php echo date("d-m-Y", strtotime($record->createdDtm)) ?></td>
+                        <td class="text-center">
+                            <a class="btn btn-sm btn-primary" href="<?= base_url().'login-history/'.$record->userId; ?>" title="Login history"><i class="fa fa-history"></i></a> | 
+                            <a class="btn btn-sm btn-info" href="<?php echo base_url().'editOld/'.$record->userId; ?>" title="Edit"><i class="fa fa-pencil"></i></a>
+                            <a class="btn btn-sm btn-danger deleteUser" href="#" data-userid="<?php echo $record->userId; ?>" title="Delete"><i class="fa fa-trash"></i></a>
+                        </td>
                     </tr>
                     <?php
                         }

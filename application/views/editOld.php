@@ -1,31 +1,16 @@
 <?php
-
-$userId = '';
-$name = '';
-$email = '';
-$mobile = '';
-$roleId = '';
-
-if(!empty($userInfo))
-{
-    foreach ($userInfo as $uf)
-    {
-        $userId = $uf->userId;
-        $name = $uf->name;
-        $email = $uf->email;
-        $mobile = $uf->mobile;
-        $roleId = $uf->roleId;
-    }
-}
-
-
+$userId = $userInfo->userId;
+$name = $userInfo->name;
+$email = $userInfo->email;
+$mobile = $userInfo->mobile;
+$roleId = $userInfo->roleId;
 ?>
 
 <div class="content-wrapper">
     <!-- Content Header (Page header) -->
     <section class="content-header">
       <h1>
-        User Management
+        <i class="fa fa-users"></i> User Management
         <small>Add / Edit User</small>
       </h1>
     </section>
@@ -52,7 +37,7 @@ if(!empty($userInfo))
                                     <div class="form-group">
                                         <label for="fname">Full Name</label>
                                         <input type="text" class="form-control" id="fname" placeholder="Full Name" name="fname" value="<?php echo $name; ?>" maxlength="128">
-                                        <input type="hidden" value="<?php echo $userId; ?>" name="userId" />    
+                                        <input type="hidden" value="<?php echo $userId; ?>" name="userId" id="userId" />    
                                     </div>
                                     
                                 </div>
@@ -67,13 +52,13 @@ if(!empty($userInfo))
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="password">Password</label>
-                                        <input type="password" class="form-control" id="password" placeholder="Password" name="password" maxlength="10">
+                                        <input type="password" class="form-control" id="password" placeholder="Password" name="password" maxlength="20">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="cpassword">Confirm Password</label>
-                                        <input type="password" class="form-control" id="cpassword" placeholder="Confirm Password" name="cpassword" maxlength="10">
+                                        <input type="password" class="form-control" id="cpassword" placeholder="Confirm Password" name="cpassword" maxlength="20">
                                     </div>
                                 </div>
                             </div>

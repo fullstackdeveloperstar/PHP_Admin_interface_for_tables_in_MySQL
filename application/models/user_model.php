@@ -9,15 +9,20 @@ class User_model extends CI_Model
      */
     function userListingCount($searchText = '')
     {
-        $this->db->select('BaseTbl.userId, BaseTbl.email, BaseTbl.name, BaseTbl.mobile, Role.role');
+        $this->db->select('BaseTbl.userId, BaseTbl.email, BaseTbl.name, BaseTbl.mobile, BaseTbl.createdDtm, Role.role');
         $this->db->from('tbl_users as BaseTbl');
         $this->db->join('tbl_roles as Role', 'Role.roleId = BaseTbl.roleId','left');
-        if(!empty($searchText)) { $this->db->or_like('BaseTbl.email', $searchText); $this->db->or_like('BaseTbl.name', $searchText); $this->db->or_like('BaseTbl.mobile', $searchText); }
+        if(!empty($searchText)) {
+            $likeCriteria = "(BaseTbl.email  LIKE '%".$searchText."%'
+                            OR  BaseTbl.name  LIKE '%".$searchText."%'
+                            OR  BaseTbl.mobile  LIKE '%".$searchText."%')";
+            $this->db->where($likeCriteria);
+        }
         $this->db->where('BaseTbl.isDeleted', 0);
         $this->db->where('BaseTbl.roleId !=', 1);
         $query = $this->db->get();
         
-        return count($query->result());
+        return $query->num_rows();
     }
     
     /**
@@ -29,16 +34,23 @@ class User_model extends CI_Model
      */
     function userListing($searchText = '', $page, $segment)
     {
-        $this->db->select('BaseTbl.userId, BaseTbl.email, BaseTbl.name, BaseTbl.mobile, Role.role');
+        $this->db->select('BaseTbl.userId, BaseTbl.email, BaseTbl.name, BaseTbl.mobile, BaseTbl.createdDtm, Role.role');
         $this->db->from('tbl_users as BaseTbl');
         $this->db->join('tbl_roles as Role', 'Role.roleId = BaseTbl.roleId','left');
-        if(!empty($searchText)) { $this->db->or_like('BaseTbl.email', $searchText); $this->db->or_like('BaseTbl.name', $searchText); $this->db->or_like('BaseTbl.mobile', $searchText); }
+        if(!empty($searchText)) {
+            $likeCriteria = "(BaseTbl.email  LIKE '%".$searchText."%'
+                            OR  BaseTbl.name  LIKE '%".$searchText."%'
+                            OR  BaseTbl.mobile  LIKE '%".$searchText."%')";
+            $this->db->where($likeCriteria);
+        }
         $this->db->where('BaseTbl.isDeleted', 0);
         $this->db->where('BaseTbl.roleId !=', 1);
+        $this->db->order_by('BaseTbl.userId', 'DESC');
         $this->db->limit($page, $segment);
         $query = $this->db->get();
         
-        return $query->result();
+        $result = $query->result();        
+        return $result;
     }
     
     /**
@@ -52,6 +64,26 @@ class User_model extends CI_Model
         $this->db->where('roleId !=', 1);
         $query = $this->db->get();
         
+        return $query->result();
+    }
+
+    /**
+     * This function is used to check whether email id is already exist or not
+     * @param {string} $email : This is email id
+     * @param {number} $userId : This is user id
+     * @return {mixed} $result : This is searched result
+     */
+    function checkEmailExists($email, $userId = 0)
+    {
+        $this->db->select("email");
+        $this->db->from("tbl_users");
+        $this->db->where("email", $email);   
+        $this->db->where("isDeleted", 0);
+        if($userId != 0){
+            $this->db->where("userId !=", $userId);
+        }
+        $query = $this->db->get();
+
         return $query->result();
     }
     
@@ -86,7 +118,7 @@ class User_model extends CI_Model
         $this->db->where('userId', $userId);
         $query = $this->db->get();
         
-        return $query->result();
+        return $query->row();
     }
     
     
@@ -125,13 +157,22 @@ class User_model extends CI_Model
      */
     function matchOldPassword($userId, $oldPassword)
     {
-        $this->db->select('userId');
-        $this->db->where('userId', $userId);
-        $this->db->where('password', $oldPassword);
+        $this->db->select('userId, password');
+        $this->db->where('userId', $userId);        
         $this->db->where('isDeleted', 0);
         $query = $this->db->get('tbl_users');
         
-        return $query->result();
+        $user = $query->result();
+
+        if(!empty($user)){
+            if(verifyHashedPassword($oldPassword, $user[0]->password)){
+                return $user;
+            } else {
+                return array();
+            }
+        } else {
+            return array();
+        }
     }
     
     /**
@@ -147,6 +188,103 @@ class User_model extends CI_Model
         
         return $this->db->affected_rows();
     }
+
+
+    /**
+     * This function is used to get user login history
+     * @param number $userId : This is user id
+     */
+    function loginHistoryCount($userId, $searchText, $fromDate, $toDate)
+    {
+        $this->db->select('BaseTbl.userId, BaseTbl.sessionData, BaseTbl.machineIp, BaseTbl.userAgent, BaseTbl.agentString, BaseTbl.platform, BaseTbl.createdDtm');
+        if(!empty($searchText)) {
+            $likeCriteria = "(BaseTbl.sessionData LIKE '%".$searchText."%')";
+            $this->db->where($likeCriteria);
+        }
+        if(!empty($fromDate)) {
+            $likeCriteria = "DATE_FORMAT(BaseTbl.createdDtm, '%Y-%m-%d' ) >= '".date('Y-m-d', strtotime($fromDate))."'";
+            $this->db->where($likeCriteria);
+        }
+        if(!empty($toDate)) {
+            $likeCriteria = "DATE_FORMAT(BaseTbl.createdDtm, '%Y-%m-%d' ) <= '".date('Y-m-d', strtotime($toDate))."'";
+            $this->db->where($likeCriteria);
+        }
+        if($userId >= 1){
+            $this->db->where('BaseTbl.userId', $userId);
+        }
+        $this->db->from('tbl_last_login as BaseTbl');
+        $query = $this->db->get();
+        
+        return $query->num_rows();
+    }
+
+    /**
+     * This function is used to get user login history
+     * @param number $userId : This is user id
+     * @param number $page : This is pagination offset
+     * @param number $segment : This is pagination limit
+     * @return array $result : This is result
+     */
+    function loginHistory($userId, $searchText, $fromDate, $toDate, $page, $segment)
+    {
+        $this->db->select('BaseTbl.userId, BaseTbl.sessionData, BaseTbl.machineIp, BaseTbl.userAgent, BaseTbl.agentString, BaseTbl.platform, BaseTbl.createdDtm');
+        $this->db->from('tbl_last_login as BaseTbl');
+        if(!empty($searchText)) {
+            $likeCriteria = "(BaseTbl.sessionData  LIKE '%".$searchText."%')";
+            $this->db->where($likeCriteria);
+        }
+        if(!empty($fromDate)) {
+            $likeCriteria = "DATE_FORMAT(BaseTbl.createdDtm, '%Y-%m-%d' ) >= '".date('Y-m-d', strtotime($fromDate))."'";
+            $this->db->where($likeCriteria);
+        }
+        if(!empty($toDate)) {
+            $likeCriteria = "DATE_FORMAT(BaseTbl.createdDtm, '%Y-%m-%d' ) <= '".date('Y-m-d', strtotime($toDate))."'";
+            $this->db->where($likeCriteria);
+        }
+        if($userId >= 1){
+            $this->db->where('BaseTbl.userId', $userId);
+        }
+        $this->db->order_by('BaseTbl.id', 'DESC');
+        $this->db->limit($page, $segment);
+        $query = $this->db->get();
+        
+        $result = $query->result();        
+        return $result;
+    }
+
+    /**
+     * This function used to get user information by id
+     * @param number $userId : This is user id
+     * @return array $result : This is user information
+     */
+    function getUserInfoById($userId)
+    {
+        $this->db->select('userId, name, email, mobile, roleId');
+        $this->db->from('tbl_users');
+        $this->db->where('isDeleted', 0);
+        $this->db->where('userId', $userId);
+        $query = $this->db->get();
+        
+        return $query->row();
+    }
+
+    /**
+     * This function used to get user information by id with role
+     * @param number $userId : This is user id
+     * @return aray $result : This is user information
+     */
+    function getUserInfoWithRole($userId)
+    {
+        $this->db->select('BaseTbl.userId, BaseTbl.email, BaseTbl.name, BaseTbl.mobile, BaseTbl.roleId, Roles.role');
+        $this->db->from('tbl_users as BaseTbl');
+        $this->db->join('tbl_roles as Roles','Roles.roleId = BaseTbl.roleId');
+        $this->db->where('BaseTbl.userId', $userId);
+        $this->db->where('BaseTbl.isDeleted', 0);
+        $query = $this->db->get();
+        
+        return $query->row();
+    }
+
 }
 
   

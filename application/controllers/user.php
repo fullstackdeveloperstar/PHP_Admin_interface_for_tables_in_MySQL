@@ -1,14 +1,16 @@
 <?php if(!defined('BASEPATH')) exit('No direct script access allowed');
 
-class User extends CI_Controller
+require APPPATH . '/libraries/BaseController.php';
+
+/**
+ * Class : User (UserController)
+ * User Class to control all user related operations.
+ * @author : Kishor Mali
+ * @version : 1.1
+ * @since : 15 November 2016
+ */
+class User extends BaseController
 {
-    
-    protected $role = ''; 
-    protected $vendorId = '';
-    protected $name = '';
-    protected $roleText = '';
-    protected $global = array();
-    
     /**
      * This is default constructor of the class
      */
@@ -26,77 +28,8 @@ class User extends CI_Controller
     {
         $this->global['pageTitle'] = 'CodeInsect : Dashboard';
         
-        $this->load->view('includes/header', $this->global);
-        $this->load->view('dashboard');
-        $this->load->view('includes/footer');
+        $this->loadViews("dashboard", $this->global, NULL , NULL);
     }
-    
-    /**
-     * This function used to check the user is logged in or not
-     */
-    function isLoggedIn()
-    {
-        $isLoggedIn = $this->session->userdata('isLoggedIn');
-        
-        if(!isset($isLoggedIn) || $isLoggedIn != TRUE)
-        {
-            redirect('/login');
-        }
-        else
-        {
-            $this->role = $this->session->userdata('role');
-            $this->vendorId = $this->session->userdata('userId');
-            $this->name = $this->session->userdata('name');
-            $this->roleText = $this->session->userdata('roleText');
-            
-            $this->global['name'] = $this->name;
-            $this->global['role'] = $this->role;
-            $this->global['role_text'] = $this->roleText;
-        }
-    }
-    
-    /**
-     * This function is used to check the access
-     */
-    function isAdmin()
-    {
-        if($this->role != ROLE_ADMIN) { return true; }
-        else {return false; }
-    }
-    
-    /**
-     * This function is used to check the access
-     */
-    function isTicketter()
-    {
-        if($this->role != ROLE_ADMIN || $this->role != ROLE_MANAGER) { return true; }
-        else {return false; }
-        
-    }
-    
-    /**
-     * This function is used to load the set of views
-     */
-    function loadThis()
-    {
-        $this->global['pageTitle'] = 'CodeInsect : Access Denied';
-        
-        $this->load->view('includes/header', $this->global);
-        $this->load->view('access');
-        $this->load->view('includes/footer');
-    }
-    
-    
-    /**
-     * This function is used to logged out user from system
-     */
-    function logout()
-    {
-        $this->session->sess_destroy();
-        
-        redirect('/login');
-    }
-    
     
     /**
      * This function is used to load the user list
@@ -108,50 +41,21 @@ class User extends CI_Controller
             $this->loadThis();
         }
         else
-        {
-            $this->load->model('user_model');
-        
-            $searchText = $this->input->post('searchText');
+        {        
+            $searchText = $this->security->xss_clean($this->input->post('searchText'));
             $data['searchText'] = $searchText;
             
             $this->load->library('pagination');
             
             $count = $this->user_model->userListingCount($searchText);
+
+			$returns = $this->paginationCompress ( "userListing/", $count, 10 );
             
-            $config['base_url'] = base_url().'userListing/';
-            $config['total_rows'] = $count;
-            $config['uri_segment'] = 2;
-            $config['per_page'] = 5;
-            $config['num_links'] = 5;
-            $config['full_tag_open'] = '<nav><ul class="pagination">';
-            $config['full_tag_close'] = '</ul></nav>';
-            $config['first_tag_open'] = '<li class="arrow">';
-            $config['first_link'] =  'First';
-            $config['first_tag_close'] = '</li>';
-            $config['prev_link'] = 'Previous';
-            $config['prev_tag_open'] = '<li class="arrow">';
-            $config['prev_tag_close'] = '</li>';
-            $config['next_link'] = 'Next';
-            $config['next_tag_open'] = '<li class="arrow">';
-            $config['next_tag_close'] = '</li>';
-            $config['cur_tag_open'] = '<li class="active"><a href="#">';
-            $config['cur_tag_close'] = '</a></li>';
-            $config['num_tag_open'] = '<li>';
-            $config['num_tag_close'] = '</li>';        
-            $config['last_tag_open'] = '<li class="arrow">';
-            $config['last_link'] = 'Last';
-            $config['last_tag_close'] = '</li>';
-            
-            $this->pagination->initialize($config);
-            $page = $config['per_page'];
-            $segment = $this->uri->segment(2);
-            
-            $data['userRecords'] = $this->user_model->userListing($searchText, $page, $segment);
+            $data['userRecords'] = $this->user_model->userListing($searchText, $returns["page"], $returns["segment"]);
             
             $this->global['pageTitle'] = 'CodeInsect : User Listing';
-            $this->load->view('includes/header', $this->global);
-            $this->load->view('users', $data);
-            $this->load->view('includes/footer');
+            
+            $this->loadViews("users", $this->global, $data, NULL);
         }
     }
 
@@ -170,10 +74,27 @@ class User extends CI_Controller
             $data['roles'] = $this->user_model->getUserRoles();
             
             $this->global['pageTitle'] = 'CodeInsect : Add New User';
-            $this->load->view('includes/header', $this->global);
-            $this->load->view('addNew', $data);
-            $this->load->view('includes/footer');
+
+            $this->loadViews("addNew", $this->global, $data, NULL);
         }
+    }
+
+    /**
+     * This function is used to check whether email already exist or not
+     */
+    function checkEmailExists()
+    {
+        $userId = $this->input->post("userId");
+        $email = $this->input->post("email");
+
+        if(empty($userId)){
+            $result = $this->user_model->checkEmailExists($email);
+        } else {
+            $result = $this->user_model->checkEmailExists($email, $userId);
+        }
+
+        if(empty($result)){ echo("true"); }
+        else { echo("false"); }
     }
     
     /**
@@ -189,12 +110,12 @@ class User extends CI_Controller
         {
             $this->load->library('form_validation');
             
-            $this->form_validation->set_rules('fname','Full Name','trim|required|max_length[128]|xss_clean');
-            $this->form_validation->set_rules('email','Email','trim|required|valid_email|xss_clean|max_length[128]');
+            $this->form_validation->set_rules('fname','Full Name','trim|required|max_length[128]');
+            $this->form_validation->set_rules('email','Email','trim|required|valid_email|max_length[128]');
             $this->form_validation->set_rules('password','Password','required|max_length[20]');
             $this->form_validation->set_rules('cpassword','Confirm Password','trim|required|matches[password]|max_length[20]');
             $this->form_validation->set_rules('role','Role','trim|required|numeric');
-            $this->form_validation->set_rules('mobile','Mobile Number','required|min_length[10]|xss_clean');
+            $this->form_validation->set_rules('mobile','Mobile Number','required|min_length[10]');
             
             if($this->form_validation->run() == FALSE)
             {
@@ -202,14 +123,14 @@ class User extends CI_Controller
             }
             else
             {
-                $name = ucwords(strtolower($this->input->post('fname')));
-                $email = $this->input->post('email');
+                $name = ucwords(strtolower($this->security->xss_clean($this->input->post('fname'))));
+                $email = strtolower($this->security->xss_clean($this->input->post('email')));
                 $password = $this->input->post('password');
                 $roleId = $this->input->post('role');
-                $mobile = $this->input->post('mobile');
+                $mobile = $this->security->xss_clean($this->input->post('mobile'));
                 
-                $userInfo = array('email'=>$email, 'password'=>md5($password), 'roleId'=>$roleId, 'name'=> $name,
-                                    'mobile'=>$mobile, 'createdBy'=>$this->vendorId, 'createdDtm'=>date('Y-m-d H:i:sa'));
+                $userInfo = array('email'=>$email, 'password'=>getHashedPassword($password), 'roleId'=>$roleId, 'name'=> $name,
+                                    'mobile'=>$mobile, 'createdBy'=>$this->vendorId, 'createdDtm'=>date('Y-m-d H:i:s'));
                 
                 $this->load->model('user_model');
                 $result = $this->user_model->addNewUser($userInfo);
@@ -250,9 +171,8 @@ class User extends CI_Controller
             $data['userInfo'] = $this->user_model->getUserInfo($userId);
             
             $this->global['pageTitle'] = 'CodeInsect : Edit User';
-            $this->load->view('includes/header', $this->global);
-            $this->load->view('editOld', $data);
-            $this->load->view('includes/footer');
+            
+            $this->loadViews("editOld", $this->global, $data, NULL);
         }
     }
     
@@ -272,12 +192,12 @@ class User extends CI_Controller
             
             $userId = $this->input->post('userId');
             
-            $this->form_validation->set_rules('fname','Full Name','trim|required|max_length[128]|xss_clean');
-            $this->form_validation->set_rules('email','Email','trim|required|valid_email|xss_clean|max_length[128]');
+            $this->form_validation->set_rules('fname','Full Name','trim|required|max_length[128]');
+            $this->form_validation->set_rules('email','Email','trim|required|valid_email|max_length[128]');
             $this->form_validation->set_rules('password','Password','matches[cpassword]|max_length[20]');
             $this->form_validation->set_rules('cpassword','Confirm Password','matches[password]|max_length[20]');
             $this->form_validation->set_rules('role','Role','trim|required|numeric');
-            $this->form_validation->set_rules('mobile','Mobile Number','required|min_length[10]|xss_clean');
+            $this->form_validation->set_rules('mobile','Mobile Number','required|min_length[10]');
             
             if($this->form_validation->run() == FALSE)
             {
@@ -285,23 +205,24 @@ class User extends CI_Controller
             }
             else
             {
-                $name = ucwords(strtolower($this->input->post('fname')));
-                $email = $this->input->post('email');
+                $name = ucwords(strtolower($this->security->xss_clean($this->input->post('fname'))));
+                $email = strtolower($this->security->xss_clean($this->input->post('email')));
                 $password = $this->input->post('password');
                 $roleId = $this->input->post('role');
-                $mobile = $this->input->post('mobile');
+                $mobile = $this->security->xss_clean($this->input->post('mobile'));
                 
                 $userInfo = array();
                 
                 if(empty($password))
                 {
                     $userInfo = array('email'=>$email, 'roleId'=>$roleId, 'name'=>$name,
-                                    'mobile'=>$mobile, 'updatedBy'=>$this->vendorId, 'updatedDtm'=>date('Y-m-d H:i:sa'));
+                                    'mobile'=>$mobile, 'updatedBy'=>$this->vendorId, 'updatedDtm'=>date('Y-m-d H:i:s'));
                 }
                 else
                 {
-                    $userInfo = array('email'=>$email, 'password'=>md5($password), 'roleId'=>$roleId, 'name'=>ucwords($name),
-                                    'mobile'=>$mobile, 'updatedBy'=>$this->vendorId, 'updatedDtm'=>date('Y-m-d H:i:sa'));
+                    $userInfo = array('email'=>$email, 'password'=>getHashedPassword($password), 'roleId'=>$roleId,
+                        'name'=>ucwords($name), 'mobile'=>$mobile, 'updatedBy'=>$this->vendorId, 
+                        'updatedDtm'=>date('Y-m-d H:i:s'));
                 }
                 
                 $result = $this->user_model->editUser($userInfo, $userId);
@@ -334,7 +255,7 @@ class User extends CI_Controller
         else
         {
             $userId = $this->input->post('userId');
-            $userInfo = array('isDeleted'=>1,'updatedBy'=>$this->vendorId, 'updatedDtm'=>date('Y-m-d H:i:sa'));
+            $userInfo = array('isDeleted'=>1,'updatedBy'=>$this->vendorId, 'updatedDtm'=>date('Y-m-d H:i:s'));
             
             $result = $this->user_model->deleteUser($userId, $userInfo);
             
@@ -344,22 +265,108 @@ class User extends CI_Controller
     }
     
     /**
-     * This function is used to load the change password screen
+     * Page not found : error 404
      */
-    function loadChangePass()
+    function pageNotFound()
     {
-        $this->global['pageTitle'] = 'CodeInsect : Change Password';
+        $this->global['pageTitle'] = 'CodeInsect : 404 - Page Not Found';
         
-        $this->load->view('includes/header', $this->global);
-        $this->load->view('changePassword');
-        $this->load->view('includes/footer');
+        $this->loadViews("404", $this->global, NULL, NULL);
     }
-    
-    
+
+    /**
+     * This function used to show login history
+     * @param number $userId : This is user id
+     */
+    function loginHistoy($userId = NULL)
+    {
+        if($this->isAdmin() == TRUE)
+        {
+            $this->loadThis();
+        }
+        else
+        {
+            $userId = ($userId == NULL ? 0 : $userId);
+
+            $searchText = $this->input->post('searchText');
+            $fromDate = $this->input->post('fromDate');
+            $toDate = $this->input->post('toDate');
+
+            $data["userInfo"] = $this->user_model->getUserInfoById($userId);
+
+            $data['searchText'] = $searchText;
+            $data['fromDate'] = $fromDate;
+            $data['toDate'] = $toDate;
+            
+            $this->load->library('pagination');
+            
+            $count = $this->user_model->loginHistoryCount($userId, $searchText, $fromDate, $toDate);
+
+            $returns = $this->paginationCompress ( "login-history/".$userId."/", $count, 10, 3);
+
+            $data['userRecords'] = $this->user_model->loginHistory($userId, $searchText, $fromDate, $toDate, $returns["page"], $returns["segment"]);
+            
+            $this->global['pageTitle'] = 'CodeInsect : User Login History';
+            
+            $this->loadViews("loginHistory", $this->global, $data, NULL);
+        }        
+    }
+
+    /**
+     * This function is used to show users profile
+     */
+    function profile($active = "details")
+    {
+        $data["userInfo"] = $this->user_model->getUserInfoWithRole($this->vendorId);
+        $data["active"] = $active;
+        
+        $this->global['pageTitle'] = $active == "details" ? 'CodeInsect : My Profile' : 'CodeInsect : Change Password';
+        $this->loadViews("profile", $this->global, $data, NULL);
+    }
+
+    /**
+     * This function is used to update the user details
+     * @param text $active : This is flag to set the active tab
+     */
+    function profileUpdate($active = "details")
+    {
+        $this->load->library('form_validation');
+            
+        $this->form_validation->set_rules('fname','Full Name','trim|required|max_length[128]');
+        $this->form_validation->set_rules('mobile','Mobile Number','required|min_length[10]');
+        
+        if($this->form_validation->run() == FALSE)
+        {
+            $this->profile($active);
+        }
+        else
+        {
+            $name = ucwords(strtolower($this->security->xss_clean($this->input->post('fname'))));
+            $mobile = $this->security->xss_clean($this->input->post('mobile'));
+            
+            $userInfo = array('name'=>$name, 'mobile'=>$mobile, 'updatedBy'=>$this->vendorId, 'updatedDtm'=>date('Y-m-d H:i:s'));
+            
+            $result = $this->user_model->editUser($userInfo, $this->vendorId);
+            
+            if($result == true)
+            {
+                $this->session->set_userdata('name', $name);
+                $this->session->set_flashdata('success', 'Profile updated successfully');
+            }
+            else
+            {
+                $this->session->set_flashdata('error', 'Profile updation failed');
+            }
+
+            redirect('profile/'.$active);
+        }
+    }
+
     /**
      * This function is used to change the password of the user
+     * @param text $active : This is flag to set the active tab
      */
-    function changePassword()
+    function changePassword($active = "changepass")
     {
         $this->load->library('form_validation');
         
@@ -369,30 +376,31 @@ class User extends CI_Controller
         
         if($this->form_validation->run() == FALSE)
         {
-            $this->loadChangePass();
+            $this->profile($active);
         }
         else
         {
             $oldPassword = $this->input->post('oldPassword');
             $newPassword = $this->input->post('newPassword');
             
-            $resultPas = $this->user_model->matchOldPassword($this->vendorId, md5($oldPassword));
+            $resultPas = $this->user_model->matchOldPassword($this->vendorId, $oldPassword);
             
             if(empty($resultPas))
             {
-                $this->session->set_flashdata('nomatch', 'Your old password not correct');
-                redirect('loadChangePass');
+                $this->session->set_flashdata('nomatch', 'Your old password is not correct');
+                redirect('profile/'.$active);
             }
             else
             {
-                $usersData = array('password'=>md5($newPassword), 'updatedBy'=>$this->vendorId, 'updatedDtm'=>date('Y-m-d H:i:sa'));
+                $usersData = array('password'=>getHashedPassword($newPassword), 'updatedBy'=>$this->vendorId,
+                                'updatedDtm'=>date('Y-m-d H:i:s'));
                 
                 $result = $this->user_model->changePassword($this->vendorId, $usersData);
                 
                 if($result > 0) { $this->session->set_flashdata('success', 'Password updation successful'); }
                 else { $this->session->set_flashdata('error', 'Password updation failed'); }
                 
-                redirect('loadChangePass');
+                redirect('profile/'.$active);
             }
         }
     }
