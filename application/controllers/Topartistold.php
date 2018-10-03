@@ -2,7 +2,7 @@
 
 require APPPATH . '/libraries/BaseController.php';
 
-class User extends BaseController
+class Topartistold extends BaseController
 {
     /**
      * This is default constructor of the class
@@ -11,6 +11,7 @@ class User extends BaseController
     {
         parent::__construct();
         $this->load->model('user_model');
+        $this->load->model('topartistold_model');
         $this->isLoggedIn();   
     }
     
@@ -20,8 +21,21 @@ class User extends BaseController
     public function index()
     {
         $this->global['pageTitle'] = 'Avivamiento : TopartistOld';
+        // $this->global['topartistoldlist'] = $this->topartistold_model->getAll();
+
+        $this->load->library('pagination');
+            
+        $count = $this->topartistold_model->getNumRows();
+
+        $returns = $this->paginationCompress ( "topartistold/", $count, 10 );
+            
+        $this->global['topartistoldlist'] = $this->topartistold_model->getArtistList($returns["page"], $returns["segment"]);
+            
+        $this->loadViews("topartistold/index", $this->global, NULL , NULL);
+    }
+
+    public function edit($id) {
         
-        $this->loadViews("dashboard", $this->global, NULL , NULL);
     }
     
 }

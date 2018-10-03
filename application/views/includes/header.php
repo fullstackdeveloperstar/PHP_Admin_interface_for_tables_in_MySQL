@@ -107,9 +107,9 @@
               </a>
             </li>
             <li class="treeview">
-              <a href="#" >
+              <a href="<?php echo base_url(); ?>topartistold" >
                 <i class="fa fa-plane"></i>
-                <span>New Task</span>
+                <span>Top Artist Old</span>
               </a>
             </li>
             <li class="treeview">

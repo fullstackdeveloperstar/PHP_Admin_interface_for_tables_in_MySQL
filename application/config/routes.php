@@ -88,5 +88,8 @@ $route['resetPasswordConfirmUser/(:any)'] = "login/resetPasswordConfirmUser/$1";
 $route['resetPasswordConfirmUser/(:any)/(:any)'] = "login/resetPasswordConfirmUser/$1/$2";
 $route['createPasswordUser'] = "login/createPasswordUser";
 
+$route['topartistold'] = "topartistold/index";
+$route['topartistold/(:num)'] = "topartistold/index/$1";
+
 /* End of file routes.php */
 /* Location: ./application/config/routes.php */
