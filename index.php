@@ -55,6 +55,10 @@
  */
 	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development');
 
+
+require './vendor/autoload.php';
+ini_set('max_execution_time', 600);
+ini_set('curl.cainfo', './cacert.pem');
 /*
  *---------------------------------------------------------------
  * ERROR REPORTING
@@ -63,6 +67,7 @@
  * Different environments will require different levels of error reporting.
  * By default development will show errors but testing and live will hide them.
  */
+
 switch (ENVIRONMENT)
 {
 	case 'development':

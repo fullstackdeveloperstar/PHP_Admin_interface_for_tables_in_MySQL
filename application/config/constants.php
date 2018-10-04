@@ -105,3 +105,7 @@ define('SMTP_PORT',                             '25');					// your smtp port e.g
 define('SMTP_USER',                             'Your smtp user');		// your smtp user
 define('SMTP_PASS',                             'Your smtp password');	// your smtp password
 define('MAIL_PATH',                             '/usr/sbin/sendmail');
+
+define('AWS_KEY',                             	'AKIAJWMLSFZDALDGNYXA');
+define('AWS_SECRET',                            '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');
+define('AWS_BUCKET',                            'staticusavivamiento');

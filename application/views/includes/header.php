@@ -23,6 +23,7 @@
     	}
     </style>
     <script src="<?php echo base_url(); ?>assets/bower_components/jquery/dist/jquery.min.js"></script>
+    
     <script type="text/javascript">
         var baseURL = "<?php echo base_url(); ?>";
     </script>
@@ -113,47 +114,19 @@
               </a>
             </li>
             <li class="treeview">
-              <a href="#" >
+              <a href="<?php echo base_url(); ?>topaviva" >
                 <i class="fa fa-ticket"></i>
-                <span>My Tasks</span>
+                <span>Top Aviva</span>
               </a>
             </li>
-            <?php
-            if($role == ROLE_ADMIN || $role == ROLE_MANAGER)
-            {
-            ?>
-            <li class="treeview">
-              <a href="#" >
-                <i class="fa fa-thumb-tack"></i>
-                <span>Task Status</span>
-              </a>
-            </li>
-            <li class="treeview">
-              <a href="#" >
-                <i class="fa fa-upload"></i>
-                <span>Task Uploads</span>
-              </a>
-            </li>
-            <?php
-            }
-            if($role == ROLE_ADMIN)
-            {
-            ?>
+            
             <li class="treeview">
               <a href="<?php echo base_url(); ?>userListing">
                 <i class="fa fa-users"></i>
                 <span>Users</span>
               </a>
             </li>
-            <li class="treeview">
-              <a href="#" >
-                <i class="fa fa-files-o"></i>
-                <span>Reports</span>
-              </a>
-            </li>
-            <?php
-            }
-            ?>
+            
           </ul>
         </section>
         <!-- /.sidebar -->

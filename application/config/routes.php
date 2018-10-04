@@ -90,6 +90,9 @@ $route['createPasswordUser'] = "login/createPasswordUser";
 
 $route['topartistold'] = "topartistold/index";
 $route['topartistold/(:num)'] = "topartistold/index/$1";
+$route['topartistold/edit/(:num)'] = "topartistold/edit/$1";
 
+$route['topaviva'] = "topaviva/index";
+$route['topaviva/(:num)'] = "topaviva/index/$1";
 /* End of file routes.php */
 /* Location: ./application/config/routes.php */
